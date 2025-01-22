@@ -1,0 +1,52 @@
+
+
+        Lexer
+
+                `+` --> add
+                `-` --> sub
+                `*` --> mul
+                `/` --> div
+                `^` --> exp
+                `%` --> mod
+                `&` --> band
+                `|` --> bor
+                `~` --> bnot
+                `<` --> shl
+                `>` --> shr
+                `:` --> segaddr
+                `@` --> chs
+                `?` --> ternary
+                `!` --> lnot
+       [`-`] *digit --> number
+ [`$`] [`-`] *hexdig --> number
+              `hex` --> hex
+            `print` --> print
+          `sectors` --> sectors
+            `heads` --> heads
+             `exit` --> exit
+
+        Machine:
+
+             number --> push number to stack
+              print --> print the number on top of the stack
+                hex --> print the number on top of the stack as a hexadecimal number (prefixed with `$`)
+                add --> pop the top two numbers on the stack, add them and push the result to the stack
+                sub --> pop the top two numbers on the stack, subtract the top from the second and push the result to the stack
+                mul --> pop the top two numbers on the stack, multiply them and push the result to the stack
+                div --> pop the top two numbers on the stack, divide the second by the top and push the result to the stack
+                mod --> pop the top two numbers on the stack, divide the second by the top and push the remainder to the stack
+               band --> pop the top two numbers on the stack, perform a bitwise and between the two, and push the result to the stack
+                bor --> pop the top two numbers on the stack, perform a bitwise or between the two, and push the result to the stack
+               bnot --> pop the top of the stack, invert each of its bits and push the result to the stack
+                shl --> pop the top two numbers on the stack, perform a left bit-shift of the second element by the first, and push the result to the stack
+                shr --> pop the top two numbers on the stack, perform a right bit-shift of the second element by the first, and push the result to the stack
+            segaddr --> pop the top two numbers on the stack, get the x86 address represented by `second:top`
+                chs --> pop the top three numbers off of the stack, the top is `s`, the second is `h`, and the third is `c`, calculate LBA address
+                        from `chs` provided along with the `heads` and `sectors` values which may be set with the sectors and heads instructions,
+                        push the resulting LBA address to the stack
+            ternary --> pop the top three numbers off of the stack, if the top of the stack is zero then push the second, otherwise the third back
+                        to the stack
+               lnot --> pop the top of the stack, if it is zero, push a one to the stack, and otherwise push a zero
+            sectors --> pop the top of the stack and set the number of sectors for consideration of CHS calculations, defaults to 63
+              heads --> pop the top of the stack and set the number of heads for consideration of CHS calcutions, defaults to 255
+               exit --> exit the program
