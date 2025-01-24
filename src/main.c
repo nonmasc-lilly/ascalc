@@ -32,6 +32,8 @@ void help_menu(void) {
         puts("Bitwise not simply inverts all of the bits of a.");
         puts("\n\t<argument> !\n");
         puts("Logical not simply assigns a to zero if it is nonzero and to one if it is zero.");
+        puts("\n\t<argument> dup/.\n");
+        puts("Duplicates its argument so that if its argument is 0x10, it shall put an extra 0x10 to the stack.");
         puts("\n\t<to print> hex\n");
         puts("Hex simply prints the number on top of the stack as a hexadecimal value (prefixed with $).");
         puts("\n\t<to print> print\n");

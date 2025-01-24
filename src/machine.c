@@ -36,6 +36,11 @@ void simulate_machine(const TOKENS *tokens, STATE *state) {
         uint64_t ua, ub, uc, uret;
         for(IP = 0; IP < tokens->length; IP++) {
                 switch(tokens->types[IP]) {
+                case TOKEN_TYPE_DUP:
+                        a = state_stack_pop(state);
+                        state_stack_push(state, a);
+                        state_stack_push(state, a);
+                        break;
                 case TOKEN_TYPE_ADD:
                         b = state_stack_pop(state);
                         a = state_stack_pop(state);
@@ -49,7 +54,6 @@ void simulate_machine(const TOKENS *tokens, STATE *state) {
                 case TOKEN_TYPE_MUL:
                         b = state_stack_pop(state);
                         a = state_stack_pop(state);
-                        fprintf(stderr, "%d * %d = %d\n", a, b, a*b);
                         state_stack_push(state, a*b);
                         break;
                 case TOKEN_TYPE_DIV:

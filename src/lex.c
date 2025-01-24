@@ -7,6 +7,7 @@
 
 TOKEN_TYPE chr_identify_token_type(char token) {
         switch(token) {
+        case '.':       return     TOKEN_TYPE_DUP;
         case '+':       return     TOKEN_TYPE_ADD;
         case '-':       return     TOKEN_TYPE_SUB;
         case '*':       return     TOKEN_TYPE_MUL;
@@ -14,6 +15,8 @@ TOKEN_TYPE chr_identify_token_type(char token) {
         case '%':       return     TOKEN_TYPE_MOD;
         case '@':       return     TOKEN_TYPE_CHS;
         case '|':       return     TOKEN_TYPE_BOR;
+        case '<':       return     TOKEN_TYPE_SHL;
+        case '>':       return     TOKEN_TYPE_SHR;
         case '&':       return    TOKEN_TYPE_BAND;
         case '~':       return    TOKEN_TYPE_BNOT;
         case '!':       return    TOKEN_TYPE_LNOT;
@@ -25,6 +28,7 @@ TOKEN_TYPE chr_identify_token_type(char token) {
 TOKEN_TYPE str_identify_token_type(const char *token) {
         char *eptr;
         if(!*token)                   return    TOKEN_TYPE_NULL;
+        if(!strcmp(token, "dup"))     return     TOKEN_TYPE_DUP;
         if(!strcmp(token, "hex"))     return     TOKEN_TYPE_HEX;
         if(!strcmp(token, "print"))   return   TOKEN_TYPE_PRINT;
         if(!strcmp(token, "sectors")) return TOKEN_TYPE_SECTORS;
@@ -44,8 +48,9 @@ TOKEN_TYPE str_identify_token_type(const char *token) {
         if(!strcmp(token, "lnot"))    return    TOKEN_TYPE_LNOT;
         if(!strcmp(token, "cond"))    return TOKEN_TYPE_TERNARY;
         if(!strcmp(token, "seg"))     return TOKEN_TYPE_SEGADDR;
-        if(*token == '$' || (*token == '0' && *token == 'x')) strtol(token+1, &eptr, 0x10);
-        else              strtol(token,   &eptr, 0x0A);
+        if(*token == '$')                               strtol(token+1, &eptr, 0x10);
+        else if(*token == '0' && token[1] == 'x')       strtol(token+2, &eptr, 0x10);
+        else                                            strtol(token,   &eptr, 0x0A);
         if(!*eptr) return TOKEN_TYPE_NUMBER;
         fprintf(stderr, "Unidentifiable token `%s`\n", token);
         return TOKEN_TYPE_NULL;
@@ -53,8 +58,9 @@ TOKEN_TYPE str_identify_token_type(const char *token) {
 int64_t str_identify_token_value(const char *token) {
         char *eptr;
         int64_t value;
-        if(*token == '$') value = strtol(token+1, &eptr, 0x10);
-        else              value = strtol(token,   &eptr, 0x0A);
+        if(*token == '$')                               value = strtol(token+1, &eptr, 0x10);
+        else if(*token == '0' && token[1] == 'x')       value = strtol(token+2, &eptr, 0x10);
+        else                                            value = strtol(token,   &eptr, 0x0A);
         return !*eptr * value;
 }
 const char *token_type_string(TOKEN_TYPE type) {

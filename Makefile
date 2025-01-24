@@ -27,4 +27,7 @@ build/machine.o: src/machine.c
 test: all FORCE
 	build/asc -file=test/test.asc 1 + hex
 
+install: all
+	cp build/asc /usr/bin/asc
+
 FORCE:

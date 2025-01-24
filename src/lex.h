@@ -23,6 +23,7 @@ typedef enum {
         TOKEN_TYPE_PRINT,
         TOKEN_TYPE_SECTORS,
         TOKEN_TYPE_HEADS,
+        TOKEN_TYPE_DUP,
         TOKEN_TYPE_EXIT
 } TOKEN_TYPE;
 
