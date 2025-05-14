@@ -8,6 +8,7 @@
 TOKEN_TYPE chr_identify_token_type(char token) {
         switch(token) {
         case '.':       return     TOKEN_TYPE_DUP;
+        case ',':       return     TOKEN_TYPE_POP;
         case '+':       return     TOKEN_TYPE_ADD;
         case '-':       return     TOKEN_TYPE_SUB;
         case '*':       return     TOKEN_TYPE_MUL;
@@ -29,6 +30,7 @@ TOKEN_TYPE str_identify_token_type(const char *token) {
         char *eptr;
         if(!*token)                   return    TOKEN_TYPE_NULL;
         if(!strcmp(token, "dup"))     return     TOKEN_TYPE_DUP;
+        if(!strcmp(token, "pop"))     return     TOKEN_TYPE_POP;
         if(!strcmp(token, "hex"))     return     TOKEN_TYPE_HEX;
         if(!strcmp(token, "print"))   return   TOKEN_TYPE_PRINT;
         if(!strcmp(token, "sectors")) return TOKEN_TYPE_SECTORS;
@@ -48,6 +50,11 @@ TOKEN_TYPE str_identify_token_type(const char *token) {
         if(!strcmp(token, "lnot"))    return    TOKEN_TYPE_LNOT;
         if(!strcmp(token, "cond"))    return TOKEN_TYPE_TERNARY;
         if(!strcmp(token, "seg"))     return TOKEN_TYPE_SEGADDR;
+        if(!strcmp(token, "label"))   return TOKEN_TYPE_LABEL;
+        if(!strcmp(token, "goto"))    return TOKEN_TYPE_GOTO;
+        if(!strcmp(token, "gotoif"))  return TOKEN_TYPE_GOTOIF;
+        if(!strcmp(token, "get"))     return TOKEN_TYPE_GET;
+        if(!strcmp(token, "set"))     return TOKEN_TYPE_SET;
         if(*token == '$')                               strtol(token+1, &eptr, 0x10);
         else if(*token == '0' && token[1] == 'x')       strtol(token+2, &eptr, 0x10);
         else                                            strtol(token,   &eptr, 0x0A);
@@ -65,27 +72,34 @@ int64_t str_identify_token_value(const char *token) {
 }
 const char *token_type_string(TOKEN_TYPE type) {
         switch(type) {
+        case    TOKEN_TYPE_NULL: return         "null";
         case     TOKEN_TYPE_ADD: return          "add";
         case     TOKEN_TYPE_SUB: return          "sub";
         case     TOKEN_TYPE_MUL: return          "mul";
         case     TOKEN_TYPE_DIV: return          "div";
         case     TOKEN_TYPE_MOD: return          "mod";
-        case     TOKEN_TYPE_CHS: return          "chs";
+        case    TOKEN_TYPE_BAND: return         "band";
         case     TOKEN_TYPE_BOR: return          "bor";
+        case    TOKEN_TYPE_BNOT: return         "bnot";
         case     TOKEN_TYPE_SHL: return          "shl";
         case     TOKEN_TYPE_SHR: return          "shr";
-        case     TOKEN_TYPE_HEX: return          "hex";
-        case    TOKEN_TYPE_BAND: return         "band";
-        case    TOKEN_TYPE_BNOT: return         "bnot";
-        case    TOKEN_TYPE_LNOT: return         "lnot";
-        case    TOKEN_TYPE_NULL: return         "null";
-        case    TOKEN_TYPE_EXIT: return         "exit";
-        case   TOKEN_TYPE_PRINT: return        "print";
-        case   TOKEN_TYPE_HEADS: return        "heads";
-        case  TOKEN_TYPE_NUMBER: return       "number";
-        case TOKEN_TYPE_SECTORS: return      "sectors";
-        case TOKEN_TYPE_TERNARY: return      "ternary";
         case TOKEN_TYPE_SEGADDR: return      "segaddr";
+        case     TOKEN_TYPE_CHS: return          "chs";
+        case TOKEN_TYPE_TERNARY: return      "ternary";
+        case    TOKEN_TYPE_LNOT: return         "lnot";
+        case  TOKEN_TYPE_NUMBER: return       "number";
+        case     TOKEN_TYPE_HEX: return          "hex";
+        case   TOKEN_TYPE_PRINT: return        "print";
+        case TOKEN_TYPE_SECTORS: return      "sectors";
+        case   TOKEN_TYPE_HEADS: return        "heads";
+        case     TOKEN_TYPE_DUP: return          "dup";
+        case    TOKEN_TYPE_EXIT: return         "exit";
+        case   TOKEN_TYPE_LABEL: return        "label";
+        case    TOKEN_TYPE_GOTO: return         "goto";
+        case  TOKEN_TYPE_GOTOIF: return       "gotoif";
+        case     TOKEN_TYPE_POP: return          "pop";
+        case     TOKEN_TYPE_GET: return          "get";
+        case     TOKEN_TYPE_SET: return          "set";
         default:                 return "unclassified";
         }
 }
@@ -122,7 +136,7 @@ void lex(TOKENS *ret, const char *source) {
         TOKEN_TYPE tmp_type, tmp2_type;
         buffer = calloc(1,1);
         for(i = 0; source[i]; i++) {
-                if((tmp_type = chr_identify_token_type(source[i])) == TOKEN_TYPE_NULL && !isspace(source[i])) {
+                if((tmp_type = chr_identify_token_type(source[i])) == TOKEN_TYPE_NULL && !isspace(source[i]) && source[i] != '\\') {
                         buffer = realloc(buffer, strlen(buffer) + 2);
                         buffer[strlen(buffer) + 1] = 0;
                         buffer[strlen(buffer)] = source[i];
@@ -132,6 +146,11 @@ void lex(TOKENS *ret, const char *source) {
                         tokens_append(ret, tmp2_type, str_identify_token_value(buffer));
                 }
                 if(tmp_type != TOKEN_TYPE_NULL) tokens_append(ret, tmp_type, 0);
+                if(source[i] == '\\') {
+                        i++;
+                        while(source[i] && source[i] != '\\') i++;
+                        if(!source[i]) { fprintf(stderr, "Error: expected ending comment.\n"); }
+                }
                 *(buffer = realloc(buffer, 1)) = 0;
         }
         if((tmp2_type = str_identify_token_type(buffer)) != TOKEN_TYPE_NULL) {

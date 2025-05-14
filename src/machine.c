@@ -7,9 +7,11 @@
 
 void state_create(STATE *ret) {
         memset(ret, 0, sizeof(*ret));
-        ret->stack   = malloc(1);
-        ret->heads   =      0xFF;
-        ret->sectors =        63;
+        ret->stack              = malloc(1);
+        ret->heads              =      0xFF;
+        ret->sectors            =        63;
+        ret->labels             = malloc(1);
+        ret->labels_length      = 0;
 }
 void state_destroy(STATE *ret) {
         free(ret->stack);
@@ -31,7 +33,7 @@ int64_t state_stack_pop(STATE *ret) {
 }
 
 void simulate_machine(const TOKENS *tokens, STATE *state) {
-        uint64_t IP;
+        uint32_t IP;
         int64_t a, b, c;
         uint64_t ua, ub, uc, uret;
         for(IP = 0; IP < tokens->length; IP++) {
@@ -138,10 +140,10 @@ void simulate_machine(const TOKENS *tokens, STATE *state) {
                         state_stack_push(state, tokens->values[IP]);
                         break;
                 case TOKEN_TYPE_HEX:
-                        printf("$%X\n", state_stack_pop(state));
+                        printf("$%lX\n", state_stack_pop(state));
                         break;
                 case TOKEN_TYPE_PRINT:
-                        printf("%d\n", state_stack_pop(state));
+                        printf("%ld\n", state_stack_pop(state));
                         break;
                 case TOKEN_TYPE_SECTORS:
                         state->sectors = state_stack_pop(state);
@@ -151,6 +153,44 @@ void simulate_machine(const TOKENS *tokens, STATE *state) {
                         break;
                 case TOKEN_TYPE_EXIT:
                         goto exit;
+                case TOKEN_TYPE_LABEL:
+                        a = state_stack_pop(state);
+                        ua = *(uint64_t*)&a;
+                        if(ua >= state->labels_length)
+                                state->labels = realloc(state->labels, (state->labels_length = ua+1) * sizeof(*state->labels));
+                        state->labels[ua] = IP;
+                        break;
+                case TOKEN_TYPE_GOTO:
+                        a = state_stack_pop(state);
+                        ua = *(uint64_t*)&a;
+                        if(ua >= state->labels_length)
+                                fprintf(stderr, "Expected goto label to exist, got $%8X max label = $%8X\n", ua, state->labels_length);
+                        else IP = state->labels[(*(uint64_t*)&a)] & 0xFFFFFFFF;
+                        break;
+                case TOKEN_TYPE_GOTOIF:
+                        b = state_stack_pop(state);
+                        a = state_stack_pop(state);
+                        if(a) {
+                                ub = *(uint64_t*)&b;
+                                if(ub >= state->labels_length)
+                                        fprintf(stderr, "Expected goto label to exist, got $%8X max label = $%8X\n", ub, state->labels_length);
+                                else IP = state->labels[ub] & 0xFFFFFFFF;
+                        }
+                        break;
+                case TOKEN_TYPE_POP:
+                        state_stack_pop(state);
+                        break;
+                case TOKEN_TYPE_GET:
+                        a = state_stack_pop(state);
+                        ua = *(uint64_t*)&a;
+                        state_stack_push(state, state->stack[state->stack_length - ua - 1]);
+                        break;
+                case TOKEN_TYPE_SET:
+                        b = state_stack_pop(state);
+                        a = state_stack_pop(state);
+                        ub = *(uint64_t*)&b;
+                        state->stack[state->stack_length - ub - 1] = a;
+                        break;
                 }
         }
 exit:

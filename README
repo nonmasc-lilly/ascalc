@@ -1,53 +1,75 @@
+A simple stack based calculator. Using Reverse Polish notation one may input either an integer or a command. An integer will simply be pushed directly
+to the stack and is of one of the two forms:
 
+        ('$' / '0x') ['-'] *HEXDIG
 
-        Lexer
+or
 
-                `+` --> add
-                `-` --> sub
-                `*` --> mul
-                `/` --> div
-                `^` --> exp
-                `%` --> mod
-                `&` --> band
-                `|` --> bor
-                `~` --> bnot
-                `<` --> shl
-                `>` --> shr
-                `:` --> segaddr
-                `@` --> chs
-                `?` --> ternary
-                `!` --> lnot
-       [`-`] *digit --> number
- [`$`] [`-`] *hexdig --> number
-              `hex` --> hex
-            `print` --> print
-          `sectors` --> sectors
-            `heads` --> heads
-             `exit` --> exit
+        ['-'] *DIGIT
 
-        Machine:
+i.e: `$1A`, `0x1A`, `26
 
-             number --> push number to stack
-              print --> print the number on top of the stack
-                hex --> print the number on top of the stack as a hexadecimal number (prefixed with `$`)
-                add --> pop the top two numbers on the stack, add them and push the result to the stack
-                sub --> pop the top two numbers on the stack, subtract the top from the second and push the result to the stack
-                mul --> pop the top two numbers on the stack, multiply them and push the result to the stack
-                div --> pop the top two numbers on the stack, divide the second by the top and push the result to the stack
-                mod --> pop the top two numbers on the stack, divide the second by the top and push the remainder to the stack
-               band --> pop the top two numbers on the stack, perform a bitwise and between the two, and push the result to the stack
-                bor --> pop the top two numbers on the stack, perform a bitwise or between the two, and push the result to the stack
-               bnot --> pop the top of the stack, invert each of its bits and push the result to the stack
-                shl --> pop the top two numbers on the stack, perform a left bit-shift of the second element by the first, and push the result to the stack
-                shr --> pop the top two numbers on the stack, perform a right bit-shift of the second element by the first, and push the result to the stack
-            segaddr --> pop the top two numbers on the stack, get the x86 address represented by `second:top`
-                chs --> pop the top three numbers off of the stack, the top is `s`, the second is `h`, and the third is `c`, calculate LBA address
-                        from `chs` provided along with the `heads` and `sectors` values which may be set with the sectors and heads instructions,
-                        push the resulting LBA address to the stack
-            ternary --> pop the top three numbers off of the stack, if the top of the stack is zero then push the second, otherwise the third back
-                        to the stack
-               lnot --> pop the top of the stack, if it is zero, push a one to the stack, and otherwise push a zero
-            sectors --> pop the top of the stack and set the number of sectors for consideration of CHS calculations, defaults to 63
-              heads --> pop the top of the stack and set the number of heads for consideration of CHS calcutions, defaults to 255
-               exit --> exit the program
+A command takes some number of arguments on the stack (labeled a, b, c, and so on pushed in order to their letter reference) pops them, uses there values to
+produce some result and then outputs their result either to the stack or to the terminal. The commands are as follows:
 
+        '+' / 'add'
+                returns a + b
+        '-' / 'sub'
+                returns a - b
+        '*' / 'mul'
+                returns a * b
+        '/' / 'div'
+                returns a / b
+        '%' / 'mod'
+                returns a % b
+        '&' / 'and'
+                returns a & b
+        '|' / 'or'
+                returns a | b
+        '~' / 'not'
+                returns ~a
+        '<' / 'shl'
+                returns a << b
+        '>' / 'shr'
+                returns a >> b
+        ':' / 'segaddr'
+                returns ((a & 0xFFFF) << 4) + b
+        '@' / 'chs'
+                returns (a * HEADS + b) * SECTORS + (c - 1)
+        '?' / 'cond'
+                returns (c ? a : b)
+        '!' / 'lnot'
+                returns !a
+        '.' / 'dup'
+                returns a twice
+        ',' / drop
+                removes a from the stack and returns nothing
+        'hex'
+                prints '%X', a
+        'print'
+                prints '%d', a
+        'sectors'
+                SECTORS = a
+        'heads'
+                HEADS = a
+        'exit'
+                halt program
+        'label'
+                LABEL[a] = CUR_INSTR
+        'goto'
+                GOTO LABEL[a]
+        'gotoif'
+                IF a != 0 THEN GOTO LABEL[b]
+        'get'
+                returns the a^th element of the stack...
+                i.e:
+                        1 2 3 0 get 1 get 2 get print print print print print print
+                prints:
+                        1
+                        2
+                        3
+                        3
+                        2
+                        1
+
+Comments are placed between occurrences of '\'

@@ -24,7 +24,14 @@ typedef enum {
         TOKEN_TYPE_SECTORS,
         TOKEN_TYPE_HEADS,
         TOKEN_TYPE_DUP,
-        TOKEN_TYPE_EXIT
+        TOKEN_TYPE_EXIT,
+
+        TOKEN_TYPE_LABEL,
+        TOKEN_TYPE_GOTO,
+        TOKEN_TYPE_GOTOIF,
+        TOKEN_TYPE_POP,
+        TOKEN_TYPE_GET,
+        TOKEN_TYPE_SET
 } TOKEN_TYPE;
 
 typedef struct {

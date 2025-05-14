@@ -1,8 +1,8 @@
 ifeq ($(origin CC), default)
 CC = gcc
 endif
-CFLAGS ?= -c -std=c99 -Wpedantic -ffunction-sections -fdata-sections
-LFLAGS ?= -s -ffunction-sections -fdata-sections
+CFLAGS ?= -c -std=c99 -g #-Wpedantic -ffunction-sections -fdata-sections
+LFLAGS ?=  #-ffunction-sections -fdata-sections
 OFLAGS ?= -o
 
 all: _build build/asc
@@ -25,7 +25,7 @@ build/machine.o: src/machine.c
 
 
 test: all FORCE
-	build/asc -file=test/test.asc 1 + hex
+	build/asc -file=test/test.asc
 
 install: all
 	cp build/asc /usr/bin/asc
