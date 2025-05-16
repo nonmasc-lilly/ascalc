@@ -113,7 +113,6 @@ int main(int argc, char **argv) {
         state_create(&state);
 
         lex(&tokens, content);
-        tokens_repr(&tokens);
         simulate_machine(&tokens, &state);
 
         state_destroy(&state);
